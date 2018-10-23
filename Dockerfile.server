@@ -1,0 +1,22 @@
+FROM golang:1.11.0-alpine3.8 AS build
+
+RUN apk update && apk add git
+
+RUN go get -u github.com/golang/dep/cmd/dep
+
+WORKDIR /go/src/github.com/nokamoto/proposal-nginx-grpc
+
+COPY Gopkg.lock .
+COPY Gopkg.toml .
+COPY protobuf protobuf
+COPY server server
+
+RUN dep ensure -vendor-only=true
+
+RUN go install ./server
+
+FROM alpine:3.8
+
+COPY --from=build /go/bin/server /usr/local/bin/server
+
+ENTRYPOINT [ "server" ]
