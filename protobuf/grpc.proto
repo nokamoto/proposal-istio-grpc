@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package protobuf;
+
+import "google/protobuf/timestamp.proto";
+
+enum Status {
+  OK = 0;
+  UNIMPLEMENTED = 1;
+}
+
+message Empty {
+  Status error = 1;
+}
+
+message List {
+  repeated Status error = 1;
+  repeated google.protobuf.Timestamp ts = 2;
+}
+
+service PingService {
+  rpc Ping(Empty) returns (google.protobuf.Timestamp);
+  rpc PingC(stream Empty) returns (List);
+  rpc PingS(List) returns (stream google.protobuf.Timestamp);
+  rpc PingB(stream Empty) returns (stream google.protobuf.Timestamp);
+}
