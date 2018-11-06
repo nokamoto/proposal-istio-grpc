@@ -1,0 +1,71 @@
+##################################################################################################
+# ping service
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: ping
+  labels:
+    app: ping
+spec:
+  ports:
+  - port: 9000
+    name: grpc
+  selector:
+    app: ping
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: ping-v1
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: ping
+        version: v1
+    spec:
+      containers:
+      - name: details
+        image: nokamoto13/example-ping-service-server:v0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9000
+##################################################################################################
+# ping gateway
+##################################################################################################
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: ping-gateway
+spec:
+  selector:
+    istio: ingressgateway # use istio default controller
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: ping
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - ping-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: ping
+        port:
+          number: 9000
